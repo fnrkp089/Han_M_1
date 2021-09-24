@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+  <script src="https://code.jquery.com/jquery-3.5.1.js"
+    integrity="sha256-QWo7LDvxbWT2tbbQ97B53yJnYU3WhH/C8ycbRAkjPDc=" crossorigin="anonymous"></script>
+  <style>
+  body {
+  padding-top: 70px;
+  padding-bottom: 30px;
+  }
+
+  .board_title {
+  font-weight : 700;
+  font-size : 22pt;
+  margin : 10pt;
+  }
+
+  .board_info_box {
+  color : #6B6B6B;
+  margin : 10pt;
+  }
+
+  .board_name {
+  font-size : 10pt;
+  margin-right : 10pt;
+  }
+
+  .board_date {
+  font-size : 10pt;
+  }
+
+  .board_content {
+  color : #444343;
+  font-size : 12pt;
+  margin : 10pt;
+  }
+
+  .board_tag {
+  font-size : 11pt;
+  margin : 10pt;
+  padding-bottom : 10pt;
+  }
+
+  </style>
+  <meta charset="UTF-8">
+  <title>board</title>
+  <script>
+    const queryString = window.location.search;
+    const urlParams = new URLSearchParams(queryString);
+    const postId = urlParams.get("postId");
+   	$(document).ready(function () {
+      getListDetail();
+  })
+
+  const getListDetail = () => {
+    $.ajax({
+      type: 'GET',
+      url: `/api/lists/${postId}`,
+      data: {},
+      error: function(xhr, status, error) {
+            if (status == 404) {
+              alert("삭제되거나 존재하지않는 글입니다.");
+            }
+            window.location.href = "/";
+          },
+      success: function(response) {
+        let postDetail = response["detail"];
+        $("#board_title").text(postDetail["title"]);
+        $("#board_name").text(postDetail["name"]);
+        $("#board_date").text(postDetail["date"]);
+        $("#board_content").text(postDetail["comment"]);
+      }
+    })
+  }
+
+  const toList = () => {
+    window.location.href = "/";
+  }
+
+  const toModify = () => {
+    window.location.href= `/modify?postId=${postId}`
+  }
+  </script>
+</head>
+<body>
+	<article>
+		<div class="container" role="main">
+
+			<div class="bg-white rounded shadow-sm">
+				<div class="board_title" id="board_title">
+
+        </div>
+
+				<div class="board_info_box">
+				작성자 : 	<span class="board_name" id="board_name"></span> /  <span class="board_date" id="board_date"></span>
+				</div>
+
+				<div class="board_content" id="board_content"></div>
+				<div class="board_tag"></div>
+			</div>
+
+			<div style="margin-top : 20px">
+				<button type="button" class="btn btn-sm btn-primary" id="btnUpdate" onclick= toModify() >수정</button>
+				<button type="button" class="btn btn-sm btn-primary" id="btnList" onclick=toList()>목록</button>
+			</div>
+		</div>
+	</article>
+</body>
+</html>
