@@ -3,14 +3,26 @@
 <html>
 
 <head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test List</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/css/bootstrap.min.css"
+  integrity="sha384-TX8t27EcRE3e/ihU7zmQxVncDAy5uIKz4rEkgIXeMed4M0jlfIDPvg6uqKI2xXr2" crossorigin="anonymous">
   <script src="https://code.jquery.com/jquery-3.5.1.js"
-    integrity="sha256-QWo7LDvxbWT2tbbQ97B53yJnYU3WhH/C8ycbRAkjPDc=" crossorigin="anonymous"></script>
-  <style>
-  body {
-  padding-top: 70px;
-  padding-bottom: 30px;
-  }
+  integrity="sha256-QWo7LDvxbWT2tbbQ97B53yJnYU3WhH/C8ycbRAkjPDc=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"
+  integrity="sha384-9/reFTGAW83EW2RDu2S0VKaIzap3H66lZH81PoYlFhbGU+6BZp6G7niu735Sk7lN"
+  crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/js/bootstrap.min.js"
+  integrity="sha384-w1Q4orYjBQndcko6MimVbzY0tgp4pWB4lZ7lr30WKz0vr/aWKhXdBNmNb5D92v7s"
+  crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-cookie/1.4.1/jquery.cookie.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.4.0/socket.io.js"></script>
+  <link href="mystyle.css" rel="stylesheet" />
+  <script src="/globalFunc.js"></script>
 
+  <style>
   .board_title {
   font-weight : 700;
   font-size : 22pt;
@@ -44,14 +56,20 @@
   }
 
   </style>
+
   <meta charset="UTF-8">
   <title>board</title>
   <script>
     const queryString = window.location.search;
     const urlParams = new URLSearchParams(queryString);
     const postId = urlParams.get("postId");
+    let user;
    	$(document).ready(function () {
+      getSelf(function(info){
+        user = info;
+      })
       getListDetail();
+      getReplyList();
   })
 
   const getListDetail = () => {
@@ -75,6 +93,197 @@
     })
   }
 
+  const getReplyList = () => {
+    $.ajax({
+      type:'GET',
+      url: `/api/comment/${postId}`,
+      data: {},
+      success: function(response){
+        let replyList = response['replyedlist'];
+        for (let i = 0; i < replyList.length; i++) {
+          if(!user || replyList[i]['userId'] !== user['userId']){
+            makeReplyListNeg(replyList[i], i);
+          } else {
+            makeReplyList(replyList[i], i);
+            console.log(replyList[i])
+          }
+        }
+      },
+      error: function(xhr, status, error) {
+            if (status == 404) {
+              alert("삭제되거나 존재하지않는 글입니다.");
+            }
+            window.location.href = "/";
+          },
+    })
+  }
+
+  const makeReplyList = (list, number) => {
+      let htmlTemp =
+      `
+      <div class="container" id='container${number}'>
+        <div class="bg-white rounded shadow-sm mt-3">
+          <div class="mb-3">
+            <label for="comment">작성자: ${list['nickname']}</label>
+              <div>
+                내용 : ${list['comment']}
+              </div>
+              <div style="margin-top : 20px" >
+                <button type="button" class="btn btn-sm btn-primary float-right" onclick= modifyReply(${number})>수정</button>
+                <button type="button" class="btn btn-sm btn-primary float-right" onclick = deleteReply('${list['replyId']}')>삭제</button>
+              </div>
+            </div>
+        </div>
+      </div>
+
+      <div class="container" id='modifyContainer${number}' style='display:none'>
+        <div class="bg-white rounded shadow-sm mt-3">
+          <div class="mb-3">
+            <label for="comment">작성자: ${list['nickname']}</label>
+              <div>
+              <textarea class="form-control" rows="5" name="content" id="comment${number}">${list['comment']}</textarea>
+              </div>
+              <div id=button${number} style="margin-top : 20px" >
+                <button type="button" class="btn btn-sm btn-primary float-right" onclick= cancleReply(${number})>취소</button>
+                <button type="button" class="btn btn-sm btn-primary float-right" onclick = postModify('${list['replyId']}','${number}')>저장</button>
+              </div>
+            </div>
+        </div>
+      </div>
+      `
+
+      let deletedhtmlTemp =
+      `
+      <div class="container">
+        <div class="bg-white rounded shadow-sm mt-3">
+          <div class="mb-3">
+            삭제된 댓글입니다
+        </div>
+      </div>
+      `
+      if(list['showing'] === 1){
+        $("#replyList").append(htmlTemp)
+      } else {
+        $("#replyList").append(deletedhtmlTemp)
+      }
+    }
+
+    const makeReplyListNeg = (list, number) => {
+      let htmlTemp =
+      `
+      <div class="container">
+        <div class="bg-white rounded shadow-sm mt-3">
+          <div class="mb-3">
+            <label for="comment">작성자: ${list['nickname']}</label>
+              <div>
+                ${list['comment']}
+              </div>
+            </div>
+        </div>
+      </div>
+      `
+
+      let deletedhtmlTemp =
+      `
+      <div class="container">
+        <div class="bg-white rounded shadow-sm mt-3">
+          <div class="mb-3">
+            삭제된 댓글입니다
+        </div>
+      </div>
+      `
+      if(list['showing'] === 1){
+        $("#replyList").append(htmlTemp)
+      } else {
+        $("#replyList").append(deletedhtmlTemp)
+      }
+    }
+
+  const modifyReply = (number) => {
+    $(`#container${number}`).hide();
+    $(`#modifyContainer${number}`).show();
+  }
+
+  const cancleReply = (number) => {
+    $(`#container${number}`).show();
+    $(`#modifyContainer${number}`).hide();
+  }
+
+  const postModify = (replyId, number) => {
+    console.log(replyId);
+    console.log(number);
+    modifyReplyPost(replyId, number)
+  }
+
+  const modifyReplyPost = (replyId, number) => {
+    const comment = $(`#comment${number}`).val();
+      if(comment === ''){
+        alert('빈 내용으로 댓글을 달 수 없습니다');
+        window.location.reload();
+        return;
+      }
+    $.ajax({
+      type: "PATCH",
+      url: `/api/modifyReply`,
+      data:{
+         replyId,
+         comment : $(`#comment${number}`).val(),
+      },
+      success: function(response) {
+            if (response["result"] === "success") {
+             alert("글 수정 완료");
+             window.location.reload();
+            }
+          }
+    })
+  }
+
+  const postReply = () => {
+    if(!user){
+      alert('로그인이 필요한 서비스입니다');
+      window.location.href='login';
+      return;
+    }
+    if($('#reply').val() === '' || $('#reply').val() === 'undefined'){
+      alert('내용이 없습니다');
+      return;
+    }
+    $.ajax({
+      type: "POST",
+      url: `api/comment/posting`,
+      data:{
+        postId: postId,
+        userId: user['userId'],
+        nickname: user['nickname'],
+        comment: $('#reply').val(),
+        showing: 1,
+      },
+      success: function(response) {
+            if (response["result"] === "success") {
+             alert("글 작성 완료");
+             window.location.reload();
+            }
+          }
+    })
+  }
+
+  const deleteReply = (replyId) => {
+    $.ajax({
+      type: "PATCH",
+      url: `/api/deleteReply`,
+      data:{
+        replyId,
+        showing: 0,
+      },
+      success: function(response) {
+            if (response["result"] === "success") {
+             alert("댓글 삭제 완료");
+             window.location.reload();
+            }
+          }
+    })
+  }
+
   const toList = () => {
     window.location.href = "/";
   }
@@ -85,6 +294,30 @@
   </script>
 </head>
 <body>
+  <nav
+  class="navbar navbar-expand-sm navbar-dark bg-sparta justify-content-end"
+>
+  <a class="navbar-brand" href="/">
+    작은 게시판
+  </a>
+  <button
+    class="navbar-toggler ml-auto"
+    type="button"
+    data-toggle="collapse"
+    data-target="#navbarSupportedContent"
+    aria-controls="navbarSupportedContent"
+    aria-expanded="true"
+    aria-label="Toggle navigation"
+  >
+    <span class="navbar-toggler-icon"></span>
+  </button>
+  <div
+    class="navbar-collapse collapse flex-grow-0 ml-auto"
+    id="navbarSupportedContent"
+    style=""
+  >
+  </div>
+</nav>
 	<article>
 		<div class="container" role="main">
 
@@ -107,5 +340,19 @@
 			</div>
 		</div>
 	</article>
+  <div class="container">
+    <div class="bg-white rounded shadow-sm mt-3">
+      <div class="mb-3">
+        <label for="comment">댓글</label>
+        <textarea class="form-control" id="reply"></textarea>
+          <div style="margin-top : 20px">
+            <button type="button" class="btn btn-sm btn-primary float-right" id="btnReply" onclick=postReply() >등록</button>
+          </div>
+        </div>
+    </div>
+  </div>
+  <div class='container mt-5' id='replyList'>
+
+  </div>
 </body>
 </html>

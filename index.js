@@ -2,6 +2,7 @@ const express = require('express')
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({extended: true}));
+app.use(express.static('assets'));
 const port = 3000;
 const connect = require('./schemas');
 connect();
@@ -24,6 +25,12 @@ app.get('/detail', (req, res) => {
 })
 app.get('/modify', (req, res) => {
   res.render('modify');
+})
+app.get('/login', (req, res) => {
+  res.render('login');
+})
+app.get('/register', (req, res) => {
+  res.render('register');
 })
 
 

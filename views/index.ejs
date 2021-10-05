@@ -17,10 +17,17 @@
   crossorigin="anonymous"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-cookie/1.4.1/jquery.cookie.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.4.0/socket.io.js"></script>
+  <link href="mystyle.css" rel="stylesheet" />
+  <script src="/globalFunc.js"></script>
 
   <script>
+    let user;
+
     $(document).ready(function () {
       get_list();
+      getSelf(function(info){
+        user = info;
+      })
     })
 
     const get_list = () => {
@@ -51,17 +58,38 @@
       $("#boardList").append(htmlTemp)
     }
 
-    const toPostInfo = () => {
-
-    }
-
     const toPosting = () => {
       window.location.href = "/posting";
     }
+
   </script>
 </head>
 
 <body>
+  <nav
+  class="navbar navbar-expand-sm navbar-dark bg-sparta justify-content-end"
+>
+  <a class="navbar-brand" href="/">
+    작은 게시판
+  </a>
+  <button
+    class="navbar-toggler ml-auto"
+    type="button"
+    data-toggle="collapse"
+    data-target="#navbarSupportedContent"
+    aria-controls="navbarSupportedContent"
+    aria-expanded="true"
+    aria-label="Toggle navigation"
+  >
+    <span class="navbar-toggler-icon"></span>
+  </button>
+  <div
+    class="navbar-collapse collapse flex-grow-0 ml-auto"
+    id="navbarSupportedContent"
+    style=""
+  >
+  </div>
+</nav>
   <div class="container">
     <h1 class="text-center">나만의 작은 블로그 만들기</h1>
     <br/>
@@ -89,10 +117,9 @@
 
     <div>
       <ul class="pagenation justify-content-center">
-        
       </ul>
     </div>
-    <a class="btn btn-outline-info float-right" onclick=toPosting()>글쓰기</a>
+    <button class="btn btn-outline-info float-right" onclick=toPosting()>글쓰기</button>
   </div>
 </body>
 </html>
